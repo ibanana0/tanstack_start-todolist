@@ -11,4 +11,3 @@ export const getPunkSongs = createServerFn({
   { id: 6, name: 'All the Small Things', artist: 'blink-182' },
   { id: 7, name: 'Beverly Hills', artist: 'Weezer' },
 ])
-// 

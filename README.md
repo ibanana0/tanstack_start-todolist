@@ -288,3 +288,20 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 # Learn More
 
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+# Building Documentation
+## Setting up Project
+Run this commands in terminal
+```zsh
+npm create @tanstack/start@latest .
+npm install rxdb @tanstack/react-db @tanstack/rxdb-db-collection
+mkdir -p src/db
+touch src/db/actions.ts src/db/client.ts src/db/todoCollection.ts
+```
+**Penjelasan:**
+- Creating Tan Stack Start with `npm create @tanstack/start@latest`
+- Installing dependencies `rxdb @tanstack/react-db @tanstack/rxdb-db-collection`
+	- RxDB - menyimpan data di browser (no sql)
+	- 
+- 
+## Create Database
