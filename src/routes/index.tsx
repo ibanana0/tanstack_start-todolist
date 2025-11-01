@@ -1,118 +1,212 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+import * as React from 'react';
+import { createFileRoute } from '@tanstack/react-router';
+import { TodoActions } from '../db/actions';
 
-export const Route = createFileRoute('/')({ component: App })
+function Index() {
+  const [todos, setTodos] = React.useState<
+    Array<{ id: string; title: string; completed: boolean }>
+  >([]);
+  const [title, setTitle] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = React.useState("");
 
-function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+  React.useEffect(() => {
+    let active = true;
+
+    (async() => {
+      // Loading data todos
+      try {
+        console.log("Index: Loading todos");
+        const data = await TodoActions.getAll();
+        console.log("Index: Todos loaded", data);
+        if (active) {
+          setTodos(data);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error("Index: Failed to load todos", err);
+        if (active) {
+          setError(err as Error);
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    }
+  }, [])
+
+  // add todos
+  // mengambil dari formEvent -> formulir
+  const handleAdd = async(e: React.FormEvent) => {
+    e.preventDefault();
+    // periksa apakah User sudah memasukan string walaupun minimal 1 karakter
+    if (title.trim()) {
+      try {
+        await TodoActions.add(title);
+        setTodos(await TodoActions.getAll());
+        setTitle("");
+      } catch (err) {
+        console.error("Failed to add todo:", err);
+        setError(err as Error);
+      }
+    }
+  }
+
+  const handleToggle = async(id: string) => {
+    try {
+      await TodoActions.toggle(id);
+      setTodos(await TodoActions.getAll())
+    } catch (err) {
+      console.error("Failed to toggle todo:", err);
+    }
+  }
+  const handleRemove = async(id: string) => {
+    try {
+      await TodoActions.remove(id);
+      setTodos(await TodoActions.getAll());
+    } catch (err) {
+      console.error("Failed to remove todo:", err)
+    }
+  }
+
+  const startEdit = (todo: {id: string; title: string}) => {
+    setEditingId(todo.id);
+    setEditingTitle(todo.title);
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
+  const saveEdit = async() => {
+    // periksa apakah ada todos yang sedang diedit
+    if (!editingId) {
+      return;
+    }
+
+    const newTitle = editingTitle.trim();
+    if (!newTitle) {
+      return;
+    }
+
+    try {
+      await TodoActions.update(editingId, { title: newTitle });
+      setTodos(await TodoActions.getAll());
+      // clear editing
+      setEditingId(null);
+      setEditingTitle("");
+    } catch (err) {
+      console.error("Failed to update todo:", err);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <main className='p-6 max-w-lg mx-auto'>
+        <div className="text-center">Loading database...</div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="p-6 max-w-lg mx-auto">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error.message}</span>
+          <details className="mt-2">
+            <summary className="cursor-pointer">Show details</summary>
+            <pre className="mt-2 text-xs overflow-auto">{error.stack}</pre>
+          </details>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
-          </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
-          </div>
-        </div>
-      </section>
+    <main className="p-6 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-4">TanStack CRUD (RxDB)</h1>
+      <form onSubmit={ handleAdd } className="flex gap-2 mb-4">
+        <input value={ title } 
+        onChange={ (e) => setTitle(e.target.value) }
+        placeholder="Add a new task"
+        className="border rounded px-3 py-2 flex-1"
+        />
+        <button
+        type='submit' className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Add
+        </button>
+      </form>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
+      <ul>
+        { todos.length === 0 ? (
+          <li className="text-gray-500 text-center py-4">No todos yet</li>
+        ) : (
+          todos.map((todo) => (
+            <li
+              key={todo.id}
+              className="flex justify-between items-center py-2 border-b"
             >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+              { editingId === todo.id ? (
+                <div className="flex w-full items-center gap-2">
+                  <input value={ editingTitle }
+                  onChange={ (e) => setEditingTitle(e.target.value) } 
+                  className="border rounded px-2 py-1 flex-1"
+                  />
+                  <button
+                  onClick={ saveEdit }
+                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="px-3 py-1 rounded border"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                <span
+                onClick={() => handleToggle(todo.id)}
+                className={
+                      todo.completed
+                        ? "line-through cursor-pointer"
+                        : "cursor-pointer"
+                    }
+                >
+                  {todo.title}
+                </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => startEdit(todo)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRemove(todo.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </>
+              ) }
+            </li>
+          ))
+        ) }
+      </ul>
+    </main>
   )
 }
+
+export const Route = createFileRoute("/")({
+  component: Index,
+});

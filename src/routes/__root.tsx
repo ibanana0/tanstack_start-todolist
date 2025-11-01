@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
@@ -27,11 +27,11 @@ export const Route = createRootRoute({
       },
     ],
   }),
-
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument() {
   return (
     <html lang="en">
       <head>
@@ -39,7 +39,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        {children}
+        <Outlet />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
@@ -54,5 +54,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="p-4">
+      <h1 className="text-xl">Not Found</h1>
+      <p>The page you're looking for could not be found.</p>
+    </div>
   )
 }
